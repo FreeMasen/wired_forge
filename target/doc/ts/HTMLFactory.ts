@@ -19,6 +19,12 @@ export class HTMLFactory {
             a.appendChild(link);
         return <HTMLAnchorElement>a;
     }
+
+    button(text: string, ...attributeList: ElementAttribute[]): HTMLButtonElement {
+        var button = this.createElement('button', ...attributeList);
+        button.appendChild(document.createTextNode(text));
+        return <HTMLButtonElement>button;
+    }
     
     /**
      * Create a div element
