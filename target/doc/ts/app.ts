@@ -1,5 +1,5 @@
 import { HTMLFactory } from './HTMLFactory';
-
+import { ElementAttribute } from './ElementAttribute';
 
 var app;
 window.addEventListener('DOMContentLoaded', function() {
@@ -8,8 +8,9 @@ window.addEventListener('DOMContentLoaded', function() {
 
 class App {
     private factory = new HTMLFactory();
+
     constructor(){
-        var start = this.factory.createElement('h1', 'first-div');
+        var start = this.factory.createElement('h1', new ElementAttribute('id', 'first-div'));
         start.appendChild(document.createTextNode('Hello World'));
         document.body.appendChild(start);
 
