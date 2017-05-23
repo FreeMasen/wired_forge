@@ -1,4 +1,5 @@
 import {ElementAttribute} from './ElementAttribute';
+export {ElementAttribute} from './ElementAttribute';
 
 /**
  * A confient way to create HTML Elements
@@ -11,19 +12,19 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     a(href: string, link: string | HTMLElement, ...attributeList: ElementAttribute[]): HTMLAnchorElement {
-        var a = this.createElement('a', ...attributeList);
-        a.setAttribute('href', href);
+        var element = this.createElement('a', ...attributeList);
+        element.setAttribute('href', href);
         if (typeof link === 'string')
-            a.appendChild(document.createTextNode(link));
+            element.appendChild(document.createTextNode(link));
         else
-            a.appendChild(link);
-        return <HTMLAnchorElement>a;
+            element.appendChild(link);
+        return <HTMLAnchorElement>element;
     }
 
     button(text: string, ...attributeList: ElementAttribute[]): HTMLButtonElement {
-        var button = this.createElement('button', ...attributeList);
-        button.appendChild(document.createTextNode(text));
-        return <HTMLButtonElement>button;
+        var element = this.createElement('button', ...attributeList);
+        element.innerText = text;
+        return <HTMLButtonElement>element;
     }
     
     /**
@@ -32,9 +33,9 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     div(innerContent: HTMLElement = null, ...attributeList: ElementAttribute[]): HTMLDivElement {
-        var div = this.createElement('div', ...attributeList);
-        div.appendChild(div);
-        return <HTMLDivElement>div;
+        var element = this.createElement('div', ...attributeList);
+        element.appendChild(innerContent);
+        return <HTMLDivElement>element;
     }
 
     /**
@@ -44,9 +45,9 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     h(level: number, text: string, ...attributeList: ElementAttribute[]): HTMLElement {
-        var h = this.createElement('h' + level.toString(), ...attributeList);
-        h.appendChild(document.createTextNode(text));
-        return h;
+        var element = this.createElement('h' + level.toString(), ...attributeList);
+        element.appendChild(document.createTextNode(text));
+        return element;
     }
 
     /**
@@ -56,12 +57,12 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes 
      */
     i(text: string, font: string = null, ...attributeList: ElementAttribute[]): HTMLElement {
-        var i = this.createElement('i', ...attributeList);
-        i.appendChild(document.createTextNode(text));
+        var element = this.createElement('i', ...attributeList);
+        element.appendChild(document.createTextNode(text));
         if (font !== null) {
-            i.style.fontFamily = font;
+            element.style.fontFamily = font;
         }
-        return i;
+        return element;
     }
 
     /**
@@ -72,10 +73,10 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     link(href: string, type: string = 'text/css', rel: string = 'stylesheet', ...attributeList: ElementAttribute[]): HTMLLinkElement {
-        var link = this.createElement('link', ...attributeList);
-        link.setAttribute('type', type);
-        link.setAttribute('rel', rel);
-        return <HTMLLinkElement>link;
+        var element = this.createElement('link', ...attributeList);
+        element.setAttribute('type', type);
+        element.setAttribute('rel', rel);
+        return <HTMLLinkElement>element;
     }
 
     /**
@@ -84,12 +85,12 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     li(content: string | HTMLElement, ...attributeList: ElementAttribute[]): HTMLLIElement {
-        var li = this.createElement('li', ...attributeList);
+        var element = this.createElement('li', ...attributeList);
         if (typeof content === 'string')
-            li.appendChild(document.createTextNode(content));
+            element.appendChild(document.createTextNode(content));
         else
-            li.appendChild(<HTMLElement>content);
-        return <HTMLLIElement>li;
+            element.appendChild(<HTMLElement>content);
+        return <HTMLLIElement>element;
     }
 
     /**
@@ -98,9 +99,9 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     span(text: string, ...attributeList: ElementAttribute[]) {
-        var span = this.createElement('span', ...attributeList);
-        span.appendChild(document.createTextNode(text));
-        return span;
+        var element = this.createElement('span', ...attributeList);
+        element.appendChild(document.createTextNode(text));
+        return element;
     }
 
     /**
@@ -110,12 +111,12 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     table(headers: HTMLTableRowElement, body: HTMLTableRowElement[], ...attributeList: ElementAttribute[]): HTMLTableElement {
-        var table = this.createElement('table', ...attributeList);
-        table.appendChild(headers);
+        var element = this.createElement('table', ...attributeList);
+        element.appendChild(headers);
         for (var i = 0; i < body.length; i++) {
-            table.appendChild(body[i]);
+            element.appendChild(body[i]);
         }
-        return <HTMLTableElement>table;
+        return <HTMLTableElement>element;
     }
 
     /**
@@ -124,9 +125,9 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     td(content: string, ...attributeList: ElementAttribute[]): HTMLTableDataCellElement {
-        var td = this.createElement('td', ...attributeList);
-        td.appendChild(document.createTextNode(content));
-        return <HTMLTableDataCellElement>td;
+        var element = this.createElement('td', ...attributeList);
+        element.appendChild(document.createTextNode(content));
+        return <HTMLTableDataCellElement>element;
     }
 
     /**
@@ -136,11 +137,11 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     tr(content: HTMLTableHeaderCellElement[] | HTMLTableDataCellElement[], ...attributeList: ElementAttribute[]): HTMLTableRowElement {
-        var tr = this.createElement('tr', ...attributeList);
+        var element = this.createElement('tr', ...attributeList);
         for (var i = 0; i < content.length; i++) {
-            tr.appendChild(content[i]);
+            element.appendChild(content[i]);
         }
-        return <HTMLTableRowElement>tr;
+        return <HTMLTableRowElement>element;
     }
 
     /**
@@ -149,9 +150,9 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     th(content: string, ...attributeList: ElementAttribute[]): HTMLTableHeaderCellElement {
-        var th = this.createElement('th', ...attributeList);
-        th.appendChild(document.createTextNode(content));
-        return <HTMLTableHeaderCellElement>th;
+        var element = this.createElement('th', ...attributeList);
+        element.appendChild(document.createTextNode(content));
+        return <HTMLTableHeaderCellElement>element;
     }
 
     /**
@@ -160,11 +161,11 @@ export class HTMLFactory {
      * @param {Array<ElementAttribute>} attributeList - List of HTML attributes
      */
     ul(list: HTMLLIElement[], ...attributeList: ElementAttribute[]): HTMLUListElement {
-        var ul = this.createElement('ul', ...attributeList);
+        var element = this.createElement('ul', ...attributeList);
         for (var i = 0; i < list.length; i++) {
-            ul.appendChild(list[i]);
+            element.appendChild(list[i]);
         }
-        return <HTMLUListElement>ul;
+        return <HTMLUListElement>element;
     }
 
     /**
@@ -177,9 +178,8 @@ export class HTMLFactory {
 
         if (attributeList){
             for (var i = 0; i < attributeList.length; i++) {
-
+                element.setAttribute(attributeList[i].name, attributeList[i].value);
             }
-            element.setAttribute('class', attributeList.join(' '));
         }
         return element;
     }
