@@ -1,44 +1,57 @@
-
 /**
  * A central location for dealing with HTML and custom events
  */
 export class EventHandler {
 
-    private events = {};
-    /**
-     *  Register an HTML event to an object method, this avoids issues with events and 'this'
-     * @param selector - A good way to find the HTML element in question (use CSS Syntax)
-     * @param eventName - The event you are trying to listen to for this element (Will work with either on style events or non-on style events i.e. onclick vs click)
-     * @param listener - the function you want called on the event
-     */
-    registerHTMLEvent(selector: string, eventName: string, listener: Function): void {
+    private elementEvents = {};
+
+    registerHTMLEvent(selector: string, eventName: string, listener: Function, context: any): void {
+        console.log('registerHTMLElement', selector);
         var elements = document.querySelectorAll(selector);
+        console.log('elements', elements);
+        if (elements === undefined) return console.log('no elements');
+        if (this.elementEvents[selector] === undefined) {
+            console.log('not yet registered, setting object');
+            this.elementEvents[selector] = {};
+        }
+        var eventTarget = this.elementEvents[selector];
+        console.log('setting host ', eventTarget);
+        if (!eventTarget[eventName]) {
+            console.log('this selector has no listeners');
+            eventTarget[eventName] = [];
+        }
+        eventTarget[eventName].push(listener.bind(context));
+        console.log('events', eventTarget[eventName]);
         for (var i = 0; i < elements.length; i++) {
             var element = elements[i];
-            if (eventName.substr(0,2) !== 'on') {
-                element.addEventListener(eventName, function(event) {
-                    listener(event)
-                });
-            } else {
-                element[eventName] = function(event) {
-                    listener(event);
-                }
-            }
+            console.log('Registering event for ', element);
+            element.addEventListener(eventName, this, false);
         }
     }
 
-    /**
-     * Register a non-HTML event
-     * @param {string} eventName - Name that will be used to identify the event
-     * @param {Function} listener - Function that will be included in the list of functions called for that event
-     */
-    registerEvent(eventName: string, listener: Function): void {
-        var listeners = this.events[eventName];
-        if (listeners === undefined) {
-            this.events[eventName] = [];
-            listeners = this.events[eventName];
+    handleEvent(event): void {
+        console.log('hello from the handler', event);
+        var target = <HTMLElement>event.target;
+        var eventTarget = this.findTarget(target);
+        if (eventTarget === undefined) return;
+        console.log('Found target', eventTarget);
+        var listeners = eventTarget[event.type];
+        if (!listeners) return;
+        console.log('listeners: ', listeners);
+        for (var i = 0; i < listeners.length; i++) {
+            var fn = listeners[i];
+            console.log('listener', fn);
+            fn(event);
         }
-        listeners.push(listener);
+    }
+
+    registerNonHTMLEvent(eventName: string, listener: Function): void {
+
+    }
+
+    on(eventName: string, args: any[]): void {
+        console.log('Hello from the nonHTML Event Handler');
+
     }
 
     /**
@@ -46,11 +59,29 @@ export class EventHandler {
      * @param eventName - Name that will be used to identify the event
      * @param args - Any arguments that should be sent to the listeners
      */
-    fireEvent(eventName: string, ...args: any[]): void {
-        var listeners = this.events[eventName];
-        if (!listeners) return;
-        for (var i = 0; i < listeners.length; i++) {
-            listeners[i](...args);
+    fireEvent(event: any, ...args: any[]): void {
+       
+    }
+
+    private findTarget(target: HTMLElement): any {
+        //first try the id attribute
+        var selector = '#'  + target.id;
+        var element = this.elementEvents[selector];
+        //if that fails
+        if (element === undefined) {
+            //try each of the classes
+            var classList = target.className.split(' ');
+            for (var i = 0; i < classList.length; i ++) {
+                var c  = classList[i];
+                selector = '.' + c;
+                var element = this.elementEvents[selector];
+                //if a class was registered, return here
+                if (selector) return element;
+            }
+            //if no class was found try the tagName
+            element = this.elementEvents[target.tagName];
         }
+        //if we found the
+        return element;
     }
 }
