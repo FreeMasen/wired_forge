@@ -1,5 +1,7 @@
 import { HTMLFactory, ElementAttribute } from './HTMLFactory';
 import { EventHandler } from './EventHandler';
+import { DataService } from './DataService';
+import { BlogPost } from './BlogPost';
 
 var app;
 window.addEventListener('DOMContentLoaded', function() {
@@ -10,27 +12,28 @@ window.addEventListener('DOMContentLoaded', function() {
 class App {
     private factory = new HTMLFactory();
     private events = new EventHandler();
+    private data = new DataService();
 
-    constructor(){
-        var start = this.factory.button('start', new ElementAttribute('class', 'clicker'));
-        document.body.appendChild(start);
-        for (var i = 0; i < 25; i++) {
-            document.body.appendChild(start.cloneNode(true));
+    constructor() {
+        this.data.get('/rest/blog', (err, posts: Post[]) => {
+            if (err) console.error(err);
+            else this.displayPosts(posts);
+        });
+    }
+
+    displayPosts(posts: Post[]): void {
+        let mainContent = document.getElementById('main-content');
+        if (mainContent == null) return;
+        for (var i = 0; i < posts.length; i++) {
+            let post = posts[i];
+            mainContent.appendChild(new BlogPost(post.title, post.content, post.firstname + ' ' + post.lastname).node);
         }
-        this.events.registerHTMLEvent('.clicker', 'click', this.sayHello, this);
-        this.events.registerHTMLEvent('.clicker', 'click', this.sayGoodbye, this);
     }
+}
 
-    sayHello(event): void {
-        console.log('saying hello');
-        var start = this.factory.createElement('h1', new ElementAttribute('id', 'hey'));
-        start.appendChild(document.createTextNode('Hello World'));
-        document.body.appendChild(start);
-    } 
-
-    sayGoodbye(event): void {
-        console.log('saying goodby');
-        var bye = this.factory.h(1,'Goodbye World!', new ElementAttribute('class', 'bye'))
-        document.body.appendChild(bye);
-    }
+class Post {
+    title: string
+    content: string
+    firstname: string
+    lastname: string
 }
