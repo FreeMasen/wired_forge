@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["FreeMasen"]
 
 [dependencies]
-iron = "0.5.1"
-mount = "0.3.0"
-staticfile = "0.4.0"
+iron = "*"
+mount = "*"
+staticfile = "*"
+postgres = "0.14"
+router = "*"
+serde_json = "1.0"
+serde = "*"
+serde_derive = "*"
