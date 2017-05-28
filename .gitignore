@@ -4,3 +4,4 @@ node_modules/
 target/doc/js
 target/**/*.js
 Cargo.lock
+**/.DS_Store
