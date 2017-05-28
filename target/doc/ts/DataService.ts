@@ -28,7 +28,6 @@ export class DataService {
                     if (target.status > 200) {
                         return callback(target.statusText);
                     }
-                    debugger
                     var response
                     try {
                         response = JSON.parse(target.responseText);
