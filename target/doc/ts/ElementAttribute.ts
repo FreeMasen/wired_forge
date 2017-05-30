@@ -1,5 +1,5 @@
 
-export class ElementAttribute {
+export class Attribute {
     constructor(
         public name: string,
         public value: string
