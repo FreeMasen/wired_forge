@@ -33,7 +33,7 @@ export class DataService {
                         response = JSON.parse(target.responseText);
                         
                     } catch(e) {
-                        // callback(null, target.responseText);
+                        ;
                         response = target.responseText;
                     }
                     callback(null, response);
