@@ -6,25 +6,18 @@ export class EventHandler {
     private elementEvents = {};
 
     registerHTMLEvent(selector: string, eventName: string, listener: Function, context: any): void {
-        console.log('registerHTMLElement', selector);
         var elements = document.querySelectorAll(selector);
-        console.log('elements', elements);
         if (elements === undefined) return console.log('no elements');
         if (this.elementEvents[selector] === undefined) {
-            console.log('not yet registered, setting object');
             this.elementEvents[selector] = {};
         }
         var eventTarget = this.elementEvents[selector];
-        console.log('setting host ', eventTarget);
         if (!eventTarget[eventName]) {
-            console.log('this selector has no listeners');
             eventTarget[eventName] = [];
         }
         eventTarget[eventName].push(listener.bind(context));
-        console.log('events', eventTarget[eventName]);
         for (var i = 0; i < elements.length; i++) {
             var element = elements[i];
-            console.log('Registering event for ', element);
             element.addEventListener(eventName, this, false);
         }
     }
@@ -45,22 +38,22 @@ export class EventHandler {
         }
     }
 
-    registerNonHTMLEvent(eventName: string, listener: Function): void {
-
-    }
-
-    on(eventName: string, args: any[]): void {
-        console.log('Hello from the nonHTML Event Handler');
-
-    }
-
-    /**
-     * fire a non-HTML event you have registered here on the EventHandler
-     * @param eventName - Name that will be used to identify the event
-     * @param args - Any arguments that should be sent to the listeners
-     */
-    fireEvent(event: any, ...args: any[]): void {
-       
+    reRegister(node: HTMLElement): void {
+        var idElement = this.elementEvents['#' + node.id]
+        if (idElement !== undefined) {
+            for (var k in idElement) {
+                node.addEventListener(k, this, false);
+            }
+        }
+        var classes = node.className.split(' ');
+        for (var i = 0; i < classes.length; i++) {
+            var classEvent = this.elementEvents['.' + classes[i]]
+            if (classEvent != undefined) {
+                for (var k in classEvent) {
+                    node.addEventListener(k, this, false);
+                }
+            }
+        }
     }
 
     private findTarget(target: HTMLElement): any {
