@@ -14,12 +14,15 @@ use postgres::{Connection, TlsMode};
 use postgres::*;
 
 use iron::status;
-use iron::{Iron, Request, Response, IronResult, Handler};
+use iron::{Iron, Request, Response, IronResult, Handler, Url};
 use iron::prelude::*;
 use mount::Mount;
 use router::Router;
 use staticfile::Static;
 
+use std::io;
+use std::io::prelude::*;
+use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::fmt;
@@ -30,48 +33,67 @@ fn main() {
     
     let mut mount = Mount::new();
     mount.mount("/", Static::new(Path::new("target/doc/")))
-        .mount("/rest/blog", Blogger);
+        .mount("/rest/", Blogger);
     println!("Listening on 6767");
     Iron::new(mount).http("127.0.0.1:6767").unwrap();
 }
 
 impl Handler for Blogger {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        // let mut body = Vec::new();
-        // req
-        //     .body
-        //     .read_to_end(&mut body)
-        //     .map_err(|e| IronError::new(e, (status::InternalServerError, "Error reading request")))?;
-        let posts = get_posts();
-        Ok(Response::with((status::Ok, posts)))
+        print!("handle!");
+        let path = req.url.path()[0];
+        if path == "blog" {
+            Ok(Response::with((status::Ok, get_posts())))
+        } else if path == "about" {
+            Ok(Response::with((status::Ok, get_about())))
+        } else {
+            Ok(Response::with((status::NotFound, "Unmatched request")))
+        }
     }
+}
+
+fn get_connection_string() ->  String {
+    "postgres://postgres@localhost:5432/RFM".to_string()
 }
 
 fn get_posts() -> String {
-    //"[{\"id\": 1,\"title\": \"Hello from rust server.\",\"content\": \"This is an example of a blog post that hopefully will be stored in the database\",\"images\": []}]".to_string()
-    let conn = Connection::connect("postgres://postgres@localhost:5432/RFM", TlsMode::None).unwrap();
+    let conn = Connection::connect(get_connection_string(), TlsMode::None).unwrap();
     let mut posts = Vec::new();
-    let result =  &conn.query("select blogposts.title, blogposts.content, authors.firstname, authors.lastname
+    let result =  &conn.query("select blogposts.title, blogposts.content, authors.firstname || ' ' || authors.lastname as author
                 from blogposts
                 left join authors
                 on authors.id = blogposts.authorid", &[]).unwrap();
-    let fields = result.columns();
     for row in result {
-        let mut rowList = Vec::new();
-        let mut i = 0;
-        for field in fields {
-            let val: String = row.get(i);
-            let prop = format!("\"{}\":\"{}\"", field.name(), val.replace("\n", "\\n"));
-            rowList.push(prop);
-            i += 1;
-        }
-        posts.push(format!("{{{}}}", rowList.join(",")));
+        let post = BlogPost::new(row.get(0), row.get(1), row.get(2));
+        let post_json = serde_json::to_string(&post).unwrap();
+        posts.push(post_json);
     }
     let list = format!("[{}]", posts.join(","));
-    print!("{}",list);
     list
-
 }
+
+fn get_about() -> String {
+    let conn = Connection::connect(get_connection_string(), TlsMode::None).unwrap();
+    let mut about: Vec<String> = Vec::new();
+    let result = &conn.query("select title, content
+                            from about", &[]).unwrap();
+    for row in result {
+        let section = About{
+            title: row.get(0),
+            content: row.get(1)
+        };
+        let about_json = serde_json::to_string(&section).unwrap();
+        about.push(about_json);
+    }
+    format!("[{}]", about.join(","))
+}
+
+#[derive(Serialize, Deserialize)]
+struct About {
+    title: String,
+    content: String
+}
+
 
 #[derive(Serialize, Deserialize)]
 struct BlogPost {
@@ -81,15 +103,11 @@ struct BlogPost {
 }
 
 impl BlogPost {
-    fn to_json(&self) -> String {
-        let mut list = Vec::new();
-        list.push(format!("\"title\":, \"{}\"", self.title));
-        list.push(format!("\"content\":\"{}\"", self.content));
-        list.push(format!("\"author\":\"{}\"", self.author));
-        format!("{{{}}}", list.join(","))
-    }
-
-    fn to_string(&self) -> String {
-        format!("title: {}, content: {}, author: {}", self.title, self.content, self.author)
+    fn new(title: String, content: String, author: String) -> BlogPost {
+        BlogPost {
+            title: title,
+            content: content,
+            author: author
+        }
     }
 }
