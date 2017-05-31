@@ -7,6 +7,9 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate bcrypt;
+
+use bcrypt::{DEFAULT_COST, hash, verify};
 
 use serde_json::*;
 
@@ -43,10 +46,19 @@ impl Handler for Blogger {
         print!("handle!");
         let path = req.url.path()[0];
         if path == "blog" {
+            print!("Blog!");
             Ok(Response::with((status::Ok, get_posts())))
         } else if path == "about" {
+            print!("About!");
             Ok(Response::with((status::Ok, get_about())))
+        } else if path == "login" {
+            print!("Login!");
+            let mut bdy: String = "".to_string();
+            let read = req.body.read_to_string(&mut bdy);
+            print!("{}", bdy);
+            Ok(Response::with((status::Ok, bdy)))
         } else {
+            print!("Else!");
             Ok(Response::with((status::NotFound, "Unmatched request")))
         }
     }
@@ -86,6 +98,35 @@ fn get_about() -> String {
         about.push(about_json);
     }
     format!("[{}]", about.join(","))
+}
+
+fn log_in(username: String, password: String) {
+    let hash = getHashForUser(username.clone());
+    if checkPassword(password, hash) {
+        print!("Logged in: {}", username);
+    }
+}
+
+fn checkPassword(userValue: String, databaseValue: String) -> bool {
+    let hashedPassword = match hash(&userValue, DEFAULT_COST) {
+        Ok(h) => h,
+        Err(_) => "".to_string()
+    };
+    hashedPassword == databaseValue
+}
+
+fn getHashForUser(username: String) -> String {
+    let conn = Connection::connect(get_connection_string(), TlsMode::None).unwrap();
+    let results = &conn.query("select password_hash
+                            from users
+                            where username = $1", 
+                            &[&username]).unwrap();
+    let mut pw_hash: String = "".to_string();
+    for result in results {
+        pw_hash = result.get(0);
+        break;
+    }
+    pw_hash
 }
 
 #[derive(Serialize, Deserialize)]
