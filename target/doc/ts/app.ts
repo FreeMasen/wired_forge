@@ -1,8 +1,5 @@
-import { HTML, Attribute } from './HTML';
-import { EventHandler } from './EventHandler';
-import { DataService } from './DataService';
-import { BlogPost } from './BlogPost';
-import { About } from './About';
+import { HTML, Attribute, EventHandler, DataService } from './services';
+import { BlogPost, About, Login } from './components';
 
 var app;
 window.addEventListener('DOMContentLoaded', function() {
@@ -28,10 +25,21 @@ class App {
         this.loggedIn = !this.loggedIn;
         var text = this.loggedIn ? 'Logout' : 'Login';
         var a = this.html.a(text, null, new Attribute('id', 'login'));
-        this.html.addClass(a, 'clickable');
-        // this.events.registerHTMLEvent('#login', 'click', this.login, this);
         this.html.swapNode('#login', a);
         this.events.reRegister(a);
+        this.clearMain();
+        this.fillMain(new Login().node)
+        this.events.registerHTMLEvent('#login-submit','click', this.sendLoginRequest, this);
+    }
+
+    sendLoginRequest(event) {
+        console.log(event);
+        var username = document.querySelector('#username').nodeValue;
+        var password = document.querySelector('#password').nodeValue;
+        this.data.post('/rest/login', JSON.stringify({username: username, password: password}), (err, data) => {
+            if (err) return console.error(err)
+            console.log(data);
+        });
     }
 
     getPosts(event): void {
