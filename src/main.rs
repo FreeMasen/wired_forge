@@ -54,9 +54,20 @@ impl Handler for Blogger {
         } else if path == "login" {
             print!("Login!");
             let mut bdy: String = "".to_string();
-            let read = req.body.read_to_string(&mut bdy);
-            print!("{}", bdy);
-            Ok(Response::with((status::Ok, bdy)))
+            req.body.read_to_string(&mut bdy);
+            let mut response_code = status::Ok;
+            let user: User = serde_json::from_str(&bdy).unwrap_or(
+                User {
+                    username: "".to_string(),
+                    password: "".to_string()
+                });
+            let (success, message) = log_in(user);
+            if success {
+                response_code = status::Ok;
+            } else {
+                response_code = status::Unauthorized;
+            }
+            Ok(Response::with((response_code, message)))
         } else {
             print!("Else!");
             Ok(Response::with((status::NotFound, "Unmatched request")))
@@ -90,7 +101,7 @@ fn get_about() -> String {
     let result = &conn.query("select title, content
                             from about", &[]).unwrap();
     for row in result {
-        let section = About{
+        let section = About {
             title: row.get(0),
             content: row.get(1)
         };
@@ -100,14 +111,17 @@ fn get_about() -> String {
     format!("[{}]", about.join(","))
 }
 
-fn log_in(username: String, password: String) {
-    let hash = getHashForUser(username.clone());
-    if checkPassword(password, hash) {
-        print!("Logged in: {}", username);
+fn log_in(user: User) -> (bool, String) {
+    let db_user: User = get_db_user(user.username.clone());
+    if check_password(user.password, db_user.password) {
+        let message = format!("Logged in: {}", db_user.username.clone()).to_string();
+        print!("Logged in: {}", message);
+        return (true, message)
     }
+    (false, "No user fount or incorrect password.".to_string())
 }
 
-fn checkPassword(userValue: String, databaseValue: String) -> bool {
+fn check_password(userValue: String, databaseValue: String) -> bool {
     let hashedPassword = match hash(&userValue, DEFAULT_COST) {
         Ok(h) => h,
         Err(_) => "".to_string()
@@ -115,18 +129,18 @@ fn checkPassword(userValue: String, databaseValue: String) -> bool {
     hashedPassword == databaseValue
 }
 
-fn getHashForUser(username: String) -> String {
+fn get_db_user(username: String) -> User {
     let conn = Connection::connect(get_connection_string(), TlsMode::None).unwrap();
-    let results = &conn.query("select password_hash
+    let results = &conn.query("select username, passwordhash
                             from users
                             where username = $1", 
                             &[&username]).unwrap();
-    let mut pw_hash: String = "".to_string();
-    for result in results {
-        pw_hash = result.get(0);
-        break;
-    }
-    pw_hash
+    let result = results.get(1);
+    let user = User {
+        username: result.get(0),
+        password: result.get(1)
+    };
+    user
 }
 
 #[derive(Serialize, Deserialize)]
@@ -151,4 +165,10 @@ impl BlogPost {
             author: author
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct User {
+    username: String,
+    password: String,
 }
