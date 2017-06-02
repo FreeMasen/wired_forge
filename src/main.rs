@@ -33,7 +33,6 @@ use std::fmt;
 struct Blogger;
 
 fn main() {
-    
     let mut mount = Mount::new();
     mount.mount("/", Static::new(Path::new("target/doc/")))
         .mount("/rest/", Blogger);
@@ -135,12 +134,36 @@ fn get_db_user(username: String) -> User {
                             from users
                             where username = $1", 
                             &[&username]).unwrap();
+    if results.len() < 1 {
+        return User {
+            username: "".to_string(),
+            password: "".to_string()
+        }
+    }
     let result = results.get(1);
     let user = User {
         username: result.get(0),
         password: result.get(1)
     };
     user
+}
+
+fn new_user(username: &str, password: &str) -> bool {
+    let pw_hash = hash(password, DEFAULT_COST);
+    match pw_hash {
+        Ok(x) => return insert_new_user(username.to_string(), x),
+        _ => return false
+    }
+}
+
+fn insert_new_user(username: String, password_hash: String) -> bool {
+    let conn = Connection::connect(get_connection_string(), TlsMode::None).unwrap();
+    let result: &std::result::Result<u64, postgres::error::Error> = &conn.execute("INSERT INTO users (username, passwordhash) VALUES($1, $2)"
+                , &[&username, &password_hash]);
+    match *result {
+        Ok(_) => return true,
+        _ => return false
+    }
 }
 
 #[derive(Serialize, Deserialize)]
